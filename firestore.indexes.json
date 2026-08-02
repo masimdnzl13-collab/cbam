@@ -1,0 +1,81 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "activity_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "periodYear", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "activity_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "installationId", "order": "ASCENDING" },
+        { "fieldPath": "periodYear", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "activity_data",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "processId", "order": "ASCENDING" },
+        { "fieldPath": "periodYear", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "emission_calculations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "productId", "order": "ASCENDING" },
+        { "fieldPath": "periodYear", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "emission_calculations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "processId", "order": "ASCENDING" },
+        { "fieldPath": "version", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "products",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "installationId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "production_processes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "installationId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "precursors",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "productId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "audit_log",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

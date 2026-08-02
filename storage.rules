@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Documents are namespaced by organization: /org/{organizationId}/...
+    match /org/{organizationId}/{allPaths=**} {
+      allow read, write: if isSignedIn() &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.organizationId == organizationId &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role != 'viewer';
+    }
+  }
+}

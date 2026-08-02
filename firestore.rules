@@ -1,0 +1,157 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function myOrgId() {
+      return userDoc().data.organizationId;
+    }
+
+    function myRole() {
+      return userDoc().data.role;
+    }
+
+    function belongsToOrg(orgId) {
+      return isSignedIn() && myOrgId() == orgId;
+    }
+
+    function canWrite(orgId) {
+      return belongsToOrg(orgId) && myRole() != 'viewer';
+    }
+
+    // organizations: members can read; only owner can update org-level settings
+    match /organizations/{orgId} {
+      allow read: if belongsToOrg(orgId);
+      allow create: if isSignedIn();
+      allow update: if belongsToOrg(orgId) && myRole() == 'owner';
+      allow delete: if false;
+    }
+
+    // users: a user can read profiles within their own org; can only edit own profile
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || belongsToOrg(resource.data.organizationId));
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
+    match /installations/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    match /production_processes/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    match /products/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    match /precursors/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    match /activity_data/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId) && resource.data.isLocked != true;
+    }
+
+    match /emission_calculations/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if false; // versioned & append-only
+    }
+
+    match /carbon_prices/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    // Belge kimliği paylaşım token'ıdır: tek bir belgeyi token'ı bilen herkes
+    // (ithalatçı, giriş yapmadan) görüntüleyebilir, ancak tüm koleksiyonu
+    // listeleyemez (list yalnızca organizasyon üyelerine açık).
+    match /importer_packages/{docId} {
+      allow get: if true;
+      allow list: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    match /importer_requests/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    match /documents/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update, delete: if canWrite(resource.data.organizationId);
+    }
+
+    // audit_log: server (admin SDK) only. No client writes, org members can read their own trail.
+    match /audit_log/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow write: if false;
+    }
+
+    // error_logs: sistem geneli, yalnızca sunucu (admin SDK) tarafından yazılır
+    // ve okunur (SUPERADMIN kontrolü API route seviyesinde yapılır).
+    match /error_logs/{docId} {
+      allow read, write: if false;
+    }
+
+    // supplier_requests: belge kimliği paylaşım token'ıdır — tedarikçi giriş
+    // yapmadan tek bir belgeyi görüntüleyebilir; yanıt yazma her zaman
+    // sunucu (admin SDK) üzerinden yapılır, doğrudan istemci yazamaz.
+    match /supplier_requests/{docId} {
+      allow get: if true;
+      allow list: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update: if canWrite(resource.data.organizationId);
+      allow delete: if false;
+    }
+
+    match /period_explanations/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow create: if canWrite(request.resource.data.organizationId);
+      allow update: if canWrite(resource.data.organizationId);
+      allow delete: if false;
+    }
+
+    // document_checks: yalnızca sunucu (admin SDK, P18 AI kontrolü) yazar.
+    match /document_checks/{docId} {
+      allow read: if belongsToOrg(resource.data.organizationId);
+      allow write: if false;
+    }
+
+    // Public lead-magnet collections: write-only from the client, never readable.
+    match /waitlist/{docId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+
+    match /calculator_leads/{docId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}
